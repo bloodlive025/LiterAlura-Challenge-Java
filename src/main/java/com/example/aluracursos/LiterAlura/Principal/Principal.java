@@ -1,11 +1,14 @@
 package com.example.aluracursos.LiterAlura.Principal;
 
+import com.example.aluracursos.LiterAlura.Modelos.Autor;
 import com.example.aluracursos.LiterAlura.Modelos.Datos;
 import com.example.aluracursos.LiterAlura.Modelos.DatosLibros;
 import com.example.aluracursos.LiterAlura.Modelos.Libro;
+import com.example.aluracursos.LiterAlura.Repository.AutorRepository;
 import com.example.aluracursos.LiterAlura.Repository.DatosRepository;
 import com.example.aluracursos.LiterAlura.service.ConsumoAPI;
 import com.example.aluracursos.LiterAlura.service.ConvierteDatos;
+import org.springframework.dao.DataIntegrityViolationException;
 
 import java.util.Optional;
 import java.util.Scanner;
@@ -16,8 +19,10 @@ public class Principal {
     ConvierteDatos conversor = new ConvierteDatos();
     private final String URL_BASE = "https://gutendex.com/books/";
     private DatosRepository repositorio;
-    public Principal(DatosRepository repositorio){
+    private AutorRepository autorRepositorio;
+    public Principal(DatosRepository repositorio,AutorRepository autorRepositorio){
         this.repositorio=repositorio;
+        this.autorRepositorio=autorRepositorio;
     }
 
     int opcion;
@@ -47,13 +52,13 @@ public class Principal {
                 case 1:
                     buscarLibroPorTitulo();
                     break;
-               /* case 2:
+                case 2:
                     listarLibrosRegistrados();
                     break;
                 case 3:
                     listarAutoresRegistrados();
                     break;
-                case 4:
+                /*case 4:
                     listarAutoresVivos();
                     break;
                 case 5:
@@ -69,6 +74,10 @@ public class Principal {
 
     }
 
+    public void verificarLibroEnBilioteca(Libro libro){
+        String tituloLibro = libro.getTitulo();
+    }
+
     public void buscarLibroPorTitulo(){
         System.out.println("Ingrese el titulo del libro: ");
         String tituloLibro=teclado.nextLine();
@@ -77,12 +86,42 @@ public class Principal {
         Optional<DatosLibros> datosLibro= datos.resultados()
                 .stream()
                 .findFirst();
-        if (datosLibro.isPresent()){
-            Libro libro = new Libro(datosLibro.get());
-            repositorio.save(libro);
-        }else{
-            System.out.println("Libro no encontrado");
+        try {
+            if (datosLibro.isPresent()) {
+                Libro libro = new Libro(datosLibro.get());
+                System.out.println(libro.getAuthorDatos().getFechaDeNacimiento());
+                if (repositorio.buscarAutor(libro.getAutor()).isEmpty()) {
+                    System.out.println("El real gaaaa");
+                    autorRepositorio.save(libro.getAuthorDatos());
+                    repositorio.save(libro);
+                    System.out.println("GAAAA");
+                    System.out.println("Libro Agregado a la base de datos");
+                    System.out.println(datosLibro);
+                } else {
+                    System.out.println("GG");
+                    libro.setAuthorDatos(repositorio.buscarAutor(libro.getAutor()).get(0).getAuthorDatos());
+                    repositorio.save(libro);
+                }
+
+            } else {
+                System.out.println("Libro no encontrado");
+            }
+
         }
+        catch (DataIntegrityViolationException e){
+            System.out.println("El libro ya se encuentra en la base de datos");
+        }
+    }
+
+    public void listarLibrosRegistrados(){
+        System.out.println(repositorio.findAll());
 
     }
+
+    public void listarAutoresRegistrados(){
+        System.out.println(autorRepositorio.findAll());
+    }
+
+
+
 }

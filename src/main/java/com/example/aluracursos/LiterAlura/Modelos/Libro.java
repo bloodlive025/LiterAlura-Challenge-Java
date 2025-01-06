@@ -14,7 +14,11 @@ public class Libro {
     private String titulo;
     private String autor;
     private List<String> languages;
-    private Double countDownloads;
+    private Double countDownloads;  
+    @ManyToOne
+    @JoinColumn(name = "autor_id")
+    private Autor authorDatos;
+    public Libro(){};
 
     public Libro(DatosLibros libros){
         this.titulo=libros.titulo();
@@ -24,6 +28,10 @@ public class Libro {
                 .orElse("Nombre no disponible");
         this.languages = libros.idiomas();
         this.countDownloads=libros.numeroDeDescargas();
+        this.authorDatos=libros.autor().stream()
+                .findFirst()
+                .map(a->new Autor(a))
+                .orElse(null);
     }
 
     public Long getId() {
@@ -64,5 +72,24 @@ public class Libro {
 
     public void setCountDownloads(Double countDownloads) {
         this.countDownloads = countDownloads;
+    }
+
+    public Autor getAuthorDatos() {
+        return authorDatos;
+    }
+
+    public void setAuthorDatos(Autor authorDatos) {
+        this.authorDatos = authorDatos;
+    }
+
+    @Override
+    public String toString() {
+        return "==================================\n"+
+                "Libro numero" +id +
+                "\n titulo= " + titulo + '\n' +
+                "Autor: " + autor + '\n' +
+                "Languages: " + languages + '\n'+
+                "CountDownloads: " + countDownloads +
+                "\n=================================\n";
     }
 }
